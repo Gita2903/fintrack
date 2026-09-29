@@ -1,0 +1,6 @@
+{
+  "name": "FinTrack AI - Asisten Keuangan Pribadi",
+  "description": "Asisten Keuangan Pribadi cerdas untuk pencatatan transaksi otomatis via teks, suara & struk, pengkategorian cerdas, manajemen anggaran & peringatan, serta analisis finansial solutif.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

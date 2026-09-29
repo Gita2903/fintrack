@@ -2,6 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { ai } from "@/lib/gemini";
 import { Type } from "@google/genai";
 
+const MODEL_CHAIN = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const isRetryable = (e: unknown) => {
+  const s = (e as { status?: number })?.status;
+  return s === 503 || s === 429 || s === 500;
+};
+async function generateWithFallback(
+  params: Omit<Parameters<typeof ai.models.generateContent>[0], "model">
+) {
+  let lastErr: unknown;
+  for (const model of MODEL_CHAIN) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await ai.models.generateContent({ ...params, model });
+      } catch (e) {
+        lastErr = e;
+        if (!isRetryable(e)) throw e;
+        await sleep(800 * (attempt + 1));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { input, currentDate } = await req.json();
@@ -68,8 +92,7 @@ Jika pengguna mencatat 2 aktivitas terpisah (misal: "Gaji masuk 8jt, trus bayar 
 
 Kembalikan respon JSON persis sesuai schema.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
+    const response = await generateWithFallback({
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -153,12 +176,10 @@ Kembalikan respon JSON persis sesuai schema.`;
   } catch (error: unknown) {
     const err = error as Error;
     console.error("Error in parse transaction API:", err);
+    const status = (error as { status?: number })?.status;
     return NextResponse.json(
-      {
-        error: "Gagal memproses transaksi.",
-        details: err?.message || "Unknown error",
-      },
-      { status: 500 }
+      { error: "Gagal memproses transaksi.", details: err?.message || "Unknown error" },
+      { status: status === 503 || status === 429 ? status : 500 }
     );
   }
 }

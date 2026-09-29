@@ -105,22 +105,20 @@ export function ManualTransactionModal({
             <button
               type="button"
               onClick={() => handleTypeChange("expense")}
-              className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                type === "expense"
+              className={`py-2 text-xs font-semibold rounded-lg transition-all ${type === "expense"
                   ? "bg-rose-500/20 text-rose-400 border border-rose-500/30 shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
-              }`}
+                }`}
             >
               Pengeluaran (-)
             </button>
             <button
               type="button"
               onClick={() => handleTypeChange("income")}
-              className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                type === "income"
+              className={`py-2 text-xs font-semibold rounded-lg transition-all ${type === "income"
                   ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
-              }`}
+                }`}
             >
               Pemasukan (+)
             </button>
@@ -137,8 +135,8 @@ export function ManualTransactionModal({
               </span>
               <input
                 type="number"
-                min="100"
-                step="500"
+                min="1"
+                step="any"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="50000"

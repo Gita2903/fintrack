@@ -38,7 +38,7 @@ export function AiAdvisorModal({
   const [activeTab, setActiveTab] = useState<"analysis" | "chat">("analysis");
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [report, setReport] = useState<FinancialHealthReport | null>(null);
-
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   // Chat tab state
   const [messages, setMessages] = useState<
     Array<{ sender: "user" | "ai"; text: string; time: string }>
@@ -253,21 +253,19 @@ export function AiAdvisorModal({
         <div className="flex border-b border-slate-800 bg-slate-950/30 text-xs px-4">
           <button
             onClick={() => setActiveTab("analysis")}
-            className={`py-3 px-4 font-semibold border-b-2 transition-all ${
-              activeTab === "analysis"
-                ? "border-emerald-500 text-emerald-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
+            className={`py-3 px-4 font-semibold border-b-2 transition-all ${activeTab === "analysis"
+              ? "border-emerald-500 text-emerald-400"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
           >
             Diagnosis Finansial & Tips Hemat
           </button>
           <button
             onClick={() => setActiveTab("chat")}
-            className={`py-3 px-4 font-semibold border-b-2 transition-all flex items-center gap-1.5 ${
-              activeTab === "chat"
-                ? "border-teal-500 text-teal-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
+            className={`py-3 px-4 font-semibold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === "chat"
+              ? "border-teal-500 text-teal-400"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
             <span>Tanya FinTrack AI</span>
@@ -292,14 +290,13 @@ export function AiAdvisorModal({
               <>
                 {/* Health Status Banner */}
                 <div
-                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                    report.healthStatus === "SEHAT"
-                      ? "bg-emerald-950/30 border-emerald-500/40 text-emerald-200"
-                      : report.healthStatus === "WASPADA" ||
-                        report.healthStatus === "PERLU PERHATIAN"
+                  className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${report.healthStatus === "SEHAT"
+                    ? "bg-emerald-950/30 border-emerald-500/40 text-emerald-200"
+                    : report.healthStatus === "WASPADA" ||
+                      report.healthStatus === "PERLU PERHATIAN"
                       ? "bg-amber-950/30 border-amber-500/40 text-amber-200"
                       : "bg-rose-950/30 border-rose-500/40 text-rose-200"
-                  }`}
+                    }`}
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -430,16 +427,14 @@ export function AiAdvisorModal({
               {messages.map((m, i) => (
                 <div
                   key={i}
-                  className={`flex flex-col ${
-                    m.sender === "user" ? "items-end" : "items-start"
-                  }`}
+                  className={`flex flex-col ${m.sender === "user" ? "items-end" : "items-start"
+                    }`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-2xl p-3 text-xs sm:text-sm leading-relaxed ${
-                      m.sender === "user"
-                        ? "bg-emerald-600 text-white rounded-br-none"
-                        : "bg-slate-950 border border-slate-800 text-slate-200 rounded-bl-none shadow-md"
-                    }`}
+                    className={`max-w-[85%] rounded-2xl p-3 text-xs sm:text-sm leading-relaxed ${m.sender === "user"
+                      ? "bg-emerald-600 text-white rounded-br-none"
+                      : "bg-slate-950 border border-slate-800 text-slate-200 rounded-bl-none shadow-md"
+                      }`}
                   >
                     {m.sender === "ai" && (
                       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 mb-1">

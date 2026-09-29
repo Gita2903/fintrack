@@ -2,6 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { ai } from "@/lib/gemini";
 import { Type } from "@google/genai";
 
+const MODEL_CHAIN = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const isRetryable = (e: unknown) => {
+  const s = (e as { status?: number })?.status;
+  return s === 503 || s === 429 || s === 500;
+};
+
+async function generateWithFallback(
+  params: Omit<Parameters<typeof ai.models.generateContent>[0], "model">
+) {
+  let lastErr: unknown;
+  for (const model of MODEL_CHAIN) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await ai.models.generateContent({ ...params, model });
+      } catch (e) {
+        lastErr = e;
+        if (!isRetryable(e)) throw e; // 400/401/403 jangan diulang
+        await sleep(600 * (attempt + 1));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const {
@@ -25,11 +52,10 @@ DATA KEUANGAN PENGGUNA SAAT INI:
 - Total Pengeluaran: Rp ${(summary?.totalExpense || 0).toLocaleString("id-ID")}
 - Saldo Bersih: Rp ${(summary?.netSavings || 0).toLocaleString("id-ID")}
 - Rasio Tabungan: ${summary?.savingsRate || 0}%
-- Status Anggaran (Overbudget Alerts): ${
-      summary?.overbudgetCategories && summary.overbudgetCategories.length > 0
+- Status Anggaran (Overbudget Alerts): ${summary?.overbudgetCategories && summary.overbudgetCategories.length > 0
         ? summary.overbudgetCategories.join(", ")
         : "Tidak ada overbudget"
-    }
+      }
 - Kategori Pengeluaran Terbesar: ${JSON.stringify(summary?.topCategories || [])}
 - Target Anggaran Kategori: ${JSON.stringify(budgets || [])}
 - Contoh Transaksi Terkini: ${JSON.stringify(transactionsSample || [])}
@@ -43,8 +69,7 @@ Pertanyaan/Konsultasi Pengguna:
 
 Jawab pertanyaan pengguna dengan teliti, solutif, dan ramah. Gunakan data keuangan di atas untuk memberikan pertimbangan yang akurat (apakah keuangan pengguna saat ini sehat, aman untuk belanja tersebut, atau perlu penyesuaian). Berikan langkah konkret.`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
+      const response = await generateWithFallback({
         contents: chatPrompt,
         config: {
           systemInstruction,
@@ -66,8 +91,7 @@ Tolong buatkan analisis menyeluruh atas kondisi keuangan pengguna:
 4. 3 Saran Penghematan Realistis & Aksi Nyata: Rekomendasi yang langsung bisa dipraktekkan pengguna minggu ini dengan estimasi potensi penghematan dalam Rupiah.
 5. Rekap Ringkasan Singkat (1 kalimat penyemangat proaktif).`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
+    const response = await generateWithFallback({
       contents: prompt,
       config: {
         systemInstruction,
@@ -143,12 +167,10 @@ Tolong buatkan analisis menyeluruh atas kondisi keuangan pengguna:
   } catch (error: unknown) {
     const err = error as Error;
     console.error("Error generating advisor report:", err);
+    const status = (error as { status?: number })?.status;
     return NextResponse.json(
-      {
-        error: "Gagal membuat analisis finansial.",
-        details: err?.message || "Unknown error",
-      },
-      { status: 500 }
+      { error: "Gagal membuat analisis finansial.", details: err?.message || "Unknown error" },
+      { status: status === 503 || status === 429 ? status : 500 }
     );
   }
 }
